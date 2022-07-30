@@ -2,27 +2,18 @@
 const inquirer = require('inquirer');
 const fs = require('fs');
 // const path = require('path');
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
+const cTable = require('console.table');
 
 // const Employee = require('../team_profile_generator_chal/lib/Employee');
-
-const connection = mysql.createPool({
-    host: 'localhost',
-    database: 'employee_roster',
-    user: 'root',
-    password: 'Ptawute_iwaseko%sh13'
-})
-
 
 
 const selectPrompt = {
     type: 'list',
     name: 'browse_options',
     message: 'What would you like to do?',
-    choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role', 'End'],
+    choices: ['View all departments', 'Add a department', 'View all roles', 'Add a role', 'View all employees', 'Add an employee', 'Update an employee role', 'End'],
 };
-
-
 
 const addDeptPrompt = {
     type: 'input',
@@ -45,7 +36,7 @@ const addRolePrompt = [
         type: 'list',
         name: 'role_dept',
         message: "Under which department does the role fall?",
-        // choices: [DEPT LIST]
+        // choices: [DEPT LIST]${department_table.department_name}
     }
 ]
 
@@ -65,15 +56,61 @@ const addEmplPrompt = [
         type: 'list',
         name: 'empl_role',
         message: "What is the new employee's role?",
-        // choices: [ROLE LIST]
+        // choices: [ROLE LIST] ${employee_role.title}
     },
     {
         type: 'list',
         name: 'empl_manager',
         message: "Who is the new employee's manager?",
-        // choices: [MANAGER LIST]
+        // choices: [MANAGER LIST] ${employee.first_name} ${employee.last_name}
     },
 ];
+
+const updateEmplPrompt = [
+    {
+        type: 'list',
+        name: 'empl_update',
+        message: "Which employee's role would you like to update?",
+        // choices: [MANAGER LIST] ${employee.first_name} ${employee.last_name}
+    },
+    {
+        type: 'list',
+        name: 'empl_role',
+        message: "What role would you like to assign to the selected employee?",
+        // choices: [ROLE LIST] ${employee_role.title}
+    }
+]
+
+
+function initialPrompt() {
+
+    return inquirer.prompt(selectPrompt)
+
+    .then((select) => {
+        switch(select.browse_options) {
+            case 'View all departments':
+                return FUNCTION();
+            case 'Add a department':
+                return FUNCTION();
+            case 'View all roles':
+                return FUNCTION();
+            case 'Add a role':
+                return FUNCTION();
+            case 'View all employees':
+                return FUNCTION();
+            case 'Add an employee':
+                return FUNCTION();
+            case 'Update an employee role':
+                return FUNCTION();
+            default:
+                return leaveSession();
+        }
+    })
+};
+
+
+
+
 
 
 /*
@@ -126,67 +163,4 @@ function otherPrompt() {
 
 */
 
-
-function initialPrompt() {
-
-    return inquirer.prompt(selectPrompt)
-
-    .then((select) => {
-        switch(select.browse_options) {
-            case 'View all departments':
-                return FUNCTION();
-            case 'View all roles':
-                return FUNCTION();
-            case 'View all employees':
-                return Function();
-            case 'Add a department':
-                return Function();
-            case 'Add a role':
-                return FUNCTION();
-            case 'Add an employee':
-                return FUNCTION();
-            case 'Update an employee role':
-                return FUNCTION();
-            default:
-                return leaveSession();
-        }
-    })
-};
-
-
-
-
-function addDepartment() {
-    return inquirer.prompt(addDeptPrompt)
-
-    .then((dInput) => {
-
-        let new_dept = new addDepartment(dInput.add_department);
-
-
-        return FUNCTION();
-    })
-}
-
-function addRole(addRolePrompt) {
-    return inquirer.prompt()
-
-    .then((rInput) => {
-
-        let new_role = new addRole(rInput.role, rInput.role_salary, rInput.role_dept);
-      
-        return FUNCTION();
-    })
-
-}
-
-function addEmployee() {
-    return inquirer.prompt(addEmplPrompt)
-
-    .then((eInput) => {
-        
-        let new_empl = new Employee(eInput.empl_firstname, eInput.empl_lastname, eInput.empl_role, eInput.empl_manager);
-
-        return FUNCTION();
-    })
-}
+initialPrompt();
