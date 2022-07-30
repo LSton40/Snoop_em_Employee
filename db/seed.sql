@@ -28,12 +28,12 @@ INSERT INTO employee_role (title, salary, department_id) VALUES
     ('Designer', 53000, 3);
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES 
-    ('Willy', 'Nilson', 1), 
-    ("Len", "O'Riordan", 2), 
-    ("Allie", "Surtdottir", 3), 
-    ("Mbele", "Nkoye", 4), 
-    ("Chelsea", "Oliphant", 5),
-    ("Gary", "Sheldon", 6),
+    ('Willy', 'Nilson', 1, NULL), 
+    ("Len", "O'Riordan", 2, NULL), 
+    ("Allie", "Surtdottir", 3, NULL), 
+    ("Mbele", "Nkoye", 4, NULL), 
+    ("Chelsea", "Oliphant", 5, NULL),
+    ("Gary", "Sheldon", 6, NULL),
     ("Laurent", "Aussi", 7, 6),
     ("Geddy", "Lee", 8, 6),
     ("Ruth", "Robinson", 9, 1),

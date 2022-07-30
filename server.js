@@ -9,13 +9,13 @@ const routes = require('./routes/routes');
 
 //Set route, URL encoding, and JSON readability
 // app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.urlencoded({extended: true}));
-app.use(express.json());
+// app.use(express.urlencoded({extended: true}));
+// app.use(express.json());
 
 // Load routes
-app.use('/api', routes);
+db.use('/', routes);
 
 //PORT listener
-app.listen(PORT, () => {
+db.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
 });

@@ -24,7 +24,7 @@ CREATE TABLE employee(
     first_name VARCHAR(30) NOT NULL,
     last_name VARCHAR(30) NOT NULL,
     role_id INT,
-    manager_id INT DEFAULT NULL, --NULL,
+    manager_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (role_id) REFERENCES employee_role (id),
     FOREIGN KEY (manager_id) REFERENCES employee (id)
