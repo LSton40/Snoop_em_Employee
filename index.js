@@ -1,83 +1,99 @@
 //References packages and associated files
 const inquirer = require('inquirer');
-// const fs = require('fs');
-// const path = require('path');
+const fs = require('fs');
+const path = require('path');
 const mysql = require('mysql2/promise');
 const cTable = require('console.table');
-
+const db = require('./db/connection');
 // const Employee = require('../team_profile_generator_chal/lib/Employee');
 
-const viewDepartments = require('./src/view_departments');
-const viewRoles = require('./src/view_roles');
-const viewEmployees = require('./src/view_employees');
-const addDepartment = require('./src/add_department');
+// const viewDepartments = require('./src/view_departments');
+// const viewRoles = require('./src/view_roles');
+// const viewEmployees = require('./src/view_employees');
+// const addDepartment = require('./src/add_department');
 
-const db = require('./db/connection');
-
-
-// const selDept = `SELECT
-//     id AS 'ID',
-//     department_name AS 'Department'
-//     FROM department_table
-// `;
+const Department = require('./classes/department_obj');
 
 
-// function viewDepartments() {
-
-//     db.query(selDept, (err, departments) => {
-//         if (err) return console.log(err);
-
-//         console.table(departments);
-//         return initialPrompt();
-//     })
-// }
-
-// const selRole = `SELECT
-//     employee_role.id AS 'ID',
-//     employee_role.title AS 'Job Title',
-//     employee_role.salary AS 'Salary',
-//     department_table.department_name AS 'Department'
-//     FROM employee_role
-//         LEFT JOIN department_table
-//         ON employee_role.department_id = department_table.id
-// `;
-
-// function viewRoles() {
-
-//     db.query(selRole, (err, roles) => {
-//         if (err) return console.log(err);
-
-//         console.table(roles);
-//         return initialPrompt();
-//     })
-// }
-
-// const empls = `SELECT
-//     e.id AS 'ID',
-//     e.first_name AS 'First Name',
-//     e.last_name AS 'Last Name',
-//     employee_role.title AS 'Job Title',
-//     CONCAT(m.first_name, ' ', m.last_name) AS 'Manager'
-//     FROM employee AS e
-//         LEFT JOIN employee AS m 
-//             ON m.id = e.manager_id
-//         LEFT JOIN employee_role
-//             ON employee_role.id = e.role_id
-// `;
-
-// function viewEmployees() {
-
-//     db.query(empls, (err, employees) => {
-//         if (err) return console.log(err);
-
-//         console.table(employees);
-//         return initialPrompt();
-//     })
-// }
+const selDept = `SELECT
+id AS 'ID',
+department_name AS 'Department'
+FROM department_table
+`;
 
 
+function viewDepartments() {
+
+    db.query(selDept, (err, departments) => {
+        if (err) return console.log(err);
+
+        console.table(departments);
+        return initialPrompt();
+    })
+}
 
 
+function addDepartment() {
+    return inquirer.prompt(addDeptPrompt)
+
+    .then((dInput) => {
+
+        let new_dept = new Department(dInput.add_department);
+
+        db.query(`INSERT INTO department_table (department_name) VALUES (?)`, new_dept.dept_name, (err, data) => {
+            if (err) return console.log(err);
+    
+            new_dept.getId(data.insertId);
+
+            console.log(`${new_dept.dept_name} department successfully added`);
+            return initialPrompt();
+        })
+        return;
+    })
+};
+
+const empls = `SELECT
+    e.id AS 'ID',
+    e.first_name AS 'First Name',
+    e.last_name AS 'Last Name',
+    employee_role.title AS 'Job Title',
+    CONCAT(m.first_name, ' ', m.last_name) AS 'Manager'
+    FROM employee AS e
+        LEFT JOIN employee AS m 
+            ON m.id = e.manager_id
+        LEFT JOIN employee_role
+            ON employee_role.id = e.role_id
+`;
+
+function viewEmployees() {
+
+    db.query(empls, (err, employees) => {
+        if (err) return console.log(err);
+
+        console.table(employees);
+        return initialPrompt();
+    })
+};
+
+const selRole = `SELECT
+    employee_role.id AS 'ID',
+    employee_role.title AS 'Job Title',
+    employee_role.salary AS 'Salary',
+    department_table.department_name AS 'Department'
+    FROM employee_role
+        LEFT JOIN department_table
+        ON employee_role.department_id = department_table.id
+`;
+
+function viewRoles() {
+
+    db.query(selRole, (err, roles) => {
+        if (err) return console.log(err);
+
+        console.table(roles);
+        return initialPrompt();
+    })
+}
 
 
 const selectPrompt = {
@@ -86,40 +102,6 @@ const selectPrompt = {
     message: 'What would you like to do?',
     choices: ['View all departments', 'Add a department', 'View all roles', 'Add a role', 'View all employees', 'Add an employee', 'Update an employee role', 'End'],
 };
-
-
-// class Department {
-//     constructor(dept_name) {
-//         this.dept_name = dept_name;
-//     }
-
-//     getId(id) {
-//         return this.id = id;
-//     }
-// }
-
-
-// function addDepartment() {
-//     return inquirer.prompt(addDeptPrompt)
-
-//     .then((dInput) => {
-
-//         let new_dept = new Department(dInput.add_department);
-//         console.log(new_dept);
-
-//         db.query(`INSERT INTO department_table (department_name) VALUES (?)`, new_dept.dept_name, (err, data) => {
-//             if (err) return console.log(err);
-    
-//             new_dept.getId(data.insertId);
-
-//             // console.log(new_dept);
-//             console.log(`${new_dept.dept_name} department successfully added`);
-//             return initialPrompt();
-//         })
-//         return;
-//     })
-// };
-
 
 const addDeptPrompt = {
     type: 'input',
@@ -130,16 +112,7 @@ const addDeptPrompt = {
 
 
 
-const addToDept = () => {
-    // let deptArr = [];
-    db.query(`SELECT department_name FROM department_table`, (err, data) => {
-        if (err) return console.log(err);
 
-        // deptArr.push(data.department_name);
-        console.log(deptArr);
-    })
-    return;
-}
 
 
 class Role extends Department{
@@ -180,7 +153,62 @@ function addRole() {
         })
         return;
     })
+};
+
+// let deptArray = []
+
+function addToDept() {
+    
+   db.query(`SELECT department_name FROM department_table`, (err, data) => {
+        if (err) return console.log(err);
+        
+        let dataArray = data.map(dept => dept.department_name);
+      
+        console.log(dataArray);
+        return dataArray;
+    })
+    
 }
+
+console.log(addToDept());
+
+
+
+// function addToDept(cb) {
+//     // return new Promise((res, rej) => {
+    
+//    db.query(`SELECT department_name FROM department_table`, (err, data) => {
+//         if (err) return console.log(err);
+//         // let deptArray = [];
+        
+//         // for (let i = 0; i < data.length; i++) {
+//         //     deptArray.push(data[i].department_name)
+//         // }
+//         // console.log(deptArray);
+
+//         let dataArray = data.map(dept => dept.department_name);
+//         // newArray = data.map((dept) => {
+//         //     return dept.department_name;
+//         // })
+//         // cb(newArray => {
+//         //     return newArray
+//         // });
+//         cb(dataArray)
+//     })
+//     // }).then((data) => {
+//     //     return data
+//     // })
+//     return cb();
+// }
+
+
+// addToDept().then(deptArray => {return deptArray});
+
+// async function blob() {
+// deptArray = await addToDept();
+//     // console.log(deptArray);
+//     return deptArray
+// }
 
 
 const addRolePrompt = [
@@ -198,7 +226,7 @@ const addRolePrompt = [
         type: 'list',
         name: 'role_dept',
         message: "Under which department does the role fall?",
-        choices: addToDept()
+        // choices: 
     }
 ]
 
@@ -325,3 +353,4 @@ function otherPrompt() {
 */
 
 initialPrompt();
+

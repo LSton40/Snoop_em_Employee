@@ -1,4 +1,5 @@
-const db = require('./db/connection');
+const db = require('../db/connection');
+const cTable = require('console.table');
 
 const selRole = `SELECT
     employee_role.id AS 'ID',

@@ -1,14 +1,10 @@
-const db = require('./db/connection');
+const db = require('../db/connection');
+const inquirer = require('inquirer');
+const Department = require('../classes/department_obj');
 
-class Department {
-    constructor(dept_name) {
-        this.dept_name = dept_name;
-    }
 
-    getId(id) {
-        return this.id = id;
-    }
-}
+
+
 
 function addDepartment() {
     return inquirer.prompt(addDeptPrompt)

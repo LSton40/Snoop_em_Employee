@@ -1,4 +1,5 @@
-const db = require('./db/connection');
+const db = require('../db/connection');
+const cTable = require('console.table');
 
 const empls = `SELECT
     e.id AS 'ID',
