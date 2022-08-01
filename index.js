@@ -13,6 +13,7 @@ const db = require('./db/connection');
 // const addDepartment = require('./src/add_department');
 
 const Department = require('./classes/department_obj');
+const connection = require('./db/connection');
 
 
 const selDept = `SELECT
@@ -23,7 +24,7 @@ FROM department_table
 
 
 function viewDepartments() {
-
+    
     db.query(selDept, (err, departments) => {
         if (err) return console.log(err);
 
@@ -58,8 +59,8 @@ const empls = `SELECT
     e.last_name AS 'Last Name',
     employee_role.title AS 'Job Title',
     CONCAT(m.first_name, ' ', m.last_name) AS 'Manager'
-    FROM employee AS e
-        LEFT JOIN employee AS m 
+    FROM employee e
+        LEFT JOIN employee m 
             ON m.id = e.manager_id
         LEFT JOIN employee_role
             ON employee_role.id = e.role_id
@@ -137,8 +138,33 @@ const roleSet = `
         VALUES (?, ?, ?)
     `;
 
+
 function addRole() {
-    return inquirer.prompt(addRolePrompt)
+    //get * departments
+    //inside inquirer show all departments as a list, select one to add a role
+    //when selected grab id of department
+
+    // async function getDepartment() {
+    //     const result = await connection.query(`SELECT department_name FROM department_table`)
+    //     return result[0]
+    // }
+
+    async function addToDept() {
+        db.query(`SELECT department_name FROM department_table`, (err, data) => {
+            if (err) return console.log(err);
+    
+            let newArray = data.map(dept => dept.department_name);
+    
+            return newArray;
+        })
+        
+
+    }
+
+    addToDept()
+    .then((data) => {inquirer.prompt(addRolePrompt)})
+
+    // return inquirer.prompt(addRolePrompt)
 
     .then((rInput) => {
 
@@ -155,60 +181,40 @@ function addRole() {
     })
 };
 
-// let deptArray = []
-
-function addToDept() {
-    
-   db.query(`SELECT department_name FROM department_table`, (err, data) => {
-        if (err) return console.log(err);
-        
-        let dataArray = data.map(dept => dept.department_name);
-      
-        console.log(dataArray);
-        return dataArray;
-    })
-    
-}
-
-console.log(addToDept());
 
 
-
-// function addToDept(cb) {
-//     // return new Promise((res, rej) => {
-    
-//    db.query(`SELECT department_name FROM department_table`, (err, data) => {
-//         if (err) return console.log(err);
-//         // let deptArray = [];
-        
-//         // for (let i = 0; i < data.length; i++) {
-//         //     deptArray.push(data[i].department_name)
-//         // }
-//         // console.log(deptArray);
-
-//         let dataArray = data.map(dept => dept.department_name);
-//         // newArray = data.map((dept) => {
-//         //     return dept.department_name;
-//         // })
-//         // cb(newArray => {
-//         //     return newArray
-//         // });
-//         cb(dataArray)
-//     })
-//     // }).then((data) => {
-//     //     return data
-//     // })
-//     return cb();
+// function deptArray(data) {
+//     return data;
 // }
 
-
-// addToDept().then(deptArray => {return deptArray});
-
-// async function blob() {
-// deptArray = await addToDept();
-//     // console.log(deptArray);
-//     return deptArray
+// async function getDepartment() {
+//     const result = await connection.query(`SELECT department_name FROM department_table`)
+//     return result[0]
 // }
+
+// async function addToDept() {
+//     const blob = await db.query(`SELECT department_name FROM department_table`)
+    
+// //         // if (err) return console.log(err);
+
+// //         // let newArray = data.map(dept => dept.department_name);
+
+// //         // return newArray;
+// //         // start
+//         goOn();
+// };
+
+// addToDept().then(
+//     function(value) {deptArray(value)}
+// );
+
+// const departments = await getDepartment();
+
+
+
+
+
+
 
 
 const addRolePrompt = [
@@ -226,7 +232,8 @@ const addRolePrompt = [
         type: 'list',
         name: 'role_dept',
         message: "Under which department does the role fall?",
-        // choices: 
+        choices: [].map(dept => {return {name: dept.department_name, value: dept.id}})
+        
     }
 ]
 
