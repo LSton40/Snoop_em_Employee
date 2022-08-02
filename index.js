@@ -157,20 +157,45 @@ function addRole() {
 
 // let deptArray = []
 
-function addToDept() {
-    
-   db.query(`SELECT department_name FROM department_table`, (err, data) => {
-        if (err) return console.log(err);
-        
-        let dataArray = data.map(dept => dept.department_name);
-      
-        console.log(dataArray);
-        return dataArray;
-    })
-    
+function deptArray(data) {
+    return data;
 }
 
-console.log(addToDept());
+async function addToDept() {
+    db.query(`SELECT department_name FROM department_table`, (err, data) => {
+        if (err) return console.log(err);
+
+        let newArray = data.map(dept => dept.department_name);
+
+        return newArray;
+})
+};
+
+console.log(addToDept().then(
+    function(value) {deptArray(value)}
+));
+
+
+// function addToDept(cb) {
+  
+
+//    db.query(`SELECT department_name FROM department_table`, (err, data) => {
+//         if (err) return console.log(err);
+
+//         let newArray = data.map(dept => dept.department_name);
+      
+//         // console.log(dataArray);
+//         // return dataArray;
+//         cb(newArray);
+//     })
+// }
+
+// addToDept(deptArray => {
+//     console.log(deptArray);
+// })
+
+
+
 
 
 
