@@ -101,7 +101,7 @@ const selectPrompt = {
     type: 'list',
     name: 'browse_options',
     message: 'What would you like to do?',
-    choices: ['View all departments', 'Add a department', 'View all roles', 'Add a role', 'View all employees', 'Add an employee', 'Update an employee role', 'End'],
+    choices: ['View all departments', 'Add a department', 'View all roles', 'Add a role', 'View all employees', 'Add an employee', 'Update an employee role', 'View other options', 'End'],
 };
 
 const addDeptPrompt = {
@@ -294,17 +294,17 @@ const addEmplPrompt = [
         db.query(`SELECT id FROM employee_role WHERE title = ?`, new_empl.role, (err, role_num) => {
                     if (err) return console.log(err);
         
-                    db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = ?`, new_empl.manager, (err, mgr_num) => {
-                        if (err) return console.log(err);
+            db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = ?`, new_empl.manager, (err, mgr_num) => {
+                if (err) return console.log(err);
             
 
-            db.query(emplSet, [new_empl.first_name, new_empl.last_name, role_num[0].id, mgr_num[0].id ], (err, fin_data) => {
-                if (err) return console.log(err);
-        
-                new_empl.getEmplId(fin_data.insertId);
-                console.log(`${new_empl.first_name} ${new_empl.last_name} successfully hired`);
-                return initialPrompt();
-            })
+                db.query(emplSet, [new_empl.first_name, new_empl.last_name, role_num[0].id, mgr_num[0].id ], (err, fin_data) => {
+                    if (err) return console.log(err);
+            
+                    new_empl.getEmplId(fin_data.insertId);
+                    console.log(`${new_empl.first_name} ${new_empl.last_name} successfully hired`);
+                    return initialPrompt();
+                })
             return;
         })
         return;
@@ -361,12 +361,9 @@ function updateEmployee() {
         db.query(`SELECT CONCAT(first_name, ' ', last_name) AS 'fullname' FROM employee`, (err, empl_list) => {
             if (err) return console.log(err);
 
-            // console.log(empl_list);
             res(empl_list.map(empls => empls.fullname))
 
-            // emplList = empl_list;
 
-            // console.log(emplList);
         })
     })
     .then((data) => {
@@ -467,6 +464,8 @@ function initialPrompt() {
                 return addEmployee();
             case 'Update an employee role':
                 return updateEmployee();
+            case 'View other options':
+                return otherPrompt();
             default:
                 return leaveSession();
         }
@@ -475,7 +474,197 @@ function initialPrompt() {
 
 
 
+const emplByMgr = `
+    SELECT 
+        CONCAT(m.first_name, ' ', m.last_name) AS 'Manager',
+        CONCAT(e.first_name, ' ', e.last_name) AS 'Employee'
+        FROM employee e
+            LEFT JOIN employee m
+            ON e.manager_id = m.id
+            GROUP BY manager_id
+        `;
 
+function viewEmplMgr() {
+
+    db.query(emplByMgr, (err, empls_mgrs) => {
+        if (err) return console.log(err);
+
+        console.table(empls_mgrs)
+        return otherPrompt();
+    })
+};
+
+
+const emplByDept = `
+    SELECT 
+        d.department_name AS 'Department',
+        CONCAT(e.first_name, ' ', e.last_name) AS 'Employee'
+        FROM department_table d
+            LEFT JOIN employee_role r
+                ON r.department_id = d.id
+            LEFT JOIN employee e
+                ON e.role_id = r.id
+        GROUP BY d.department_id
+        `;
+
+function viewEmplDept() {
+
+    db.query(emplByDept, (err, empls_depts) => {
+        if (err) return console.log(err);
+
+        console.table(empls_depts)
+        return otherPrompt();
+    });
+};
+
+
+const deptBudg = `
+    SELECT
+    d.department_name AS 'Department',
+    SUM(r.salary) AS 'Utilized Department Budget'
+    FROM department_table d
+        LEFT JOIN employee_role r
+            ON r.department_id = d.id
+        LEFT JOIN employee e
+            ON e.role_id = r.id
+        GROUP BY e.id
+    `;
+
+function viewDeptBudget() {
+    db.query(deptBudg, (err, budgets) => {
+        if (err) return console.log(err);
+
+        console.table(budgets)
+        return otherPrompt();
+    });
+}
+
+
+
+
+
+function deleteDept() {
+
+    return new Promise((res, rej) => {
+
+        db.query(`SELECT department_name FROM department_table`, (err, depts) => {
+            if (err) return console.log(err);
+    
+            res(depts.map(dept => dept.department_name))
+        })
+
+
+    })
+    .then((dept_list) => {
+
+    const delDeptPrompt = {
+        type: 'list',
+        name: 'del_department',
+        message: "Which department do you want to delete?",
+        choices: dept_list
+    };
+
+    return inquirer.prompt(delDeptPrompt)
+
+    .then((dept_sel) => {
+
+        db.query(`SELECT id FROM department_table WHERE department_name = ?`, dept_sel, (err, dept_id) => {
+            if (err) return console.log(err);
+
+
+        db.query(`DELETE FROM department_table WHERE id = ?`, dept_id, (err, del_data) => {
+            if (err) return console.log(err);
+    
+            console.log(`${dept_sel} department successfully delete`)
+            return otherPrompt();
+        });
+
+        });
+    })
+
+})
+
+}
+
+
+let employee_list;
+let manager_list;
+
+
+function updateManager() {
+
+    return new Promise((res, rej) => {
+
+        db.query(`SELECT CONCAT(first_name, ' ', last_name) AS 'fullname' FROM employee`, (err, empls) => {
+            if (err) return console.log(err);
+    
+            res(empls.map(empl => empl.fullname))
+        })
+
+    })
+    .then((empl_list) => {
+
+        employee_list = empl_list
+
+        new Promise ((res, rej) => {
+
+            db.query(managerSelect, (err, new_mgr) => {
+                if (err) return console.log(err);
+    
+                res(new_mgr.map(new_manager => new_manager.managers));
+                
+            })
+    
+        })
+    
+
+
+
+    .then((mgr_list) => {
+
+        manager_list = mgr_list;
+
+    const updateMgrPrompt = [{
+        type: 'list',
+        name: 'choose_empl_chg_mgr',
+        message: "Whose manager do you wish to change?",
+        choices: empl_list
+    },
+    {
+        type: 'list',
+        name: 'update_mgr',
+        message: "Who will be the new manager of this employee?",
+        choices: manager_list
+    }
+];
+
+    return inquirer.prompt(updateMgrPrompt)
+
+    .then((user_sels) => {
+
+        db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = ?`, user_sels[0].choose_empl_chg_mgr, (err, empl_id) => {
+            if (err) return console.log(err);
+
+            
+
+            db.query(`SELECT id FROM employee WHERE CONCAT(m.first_name, ' ', m.last_name) = ?`, user_sels[1].update_mgr, (err, mgr_id) => {
+                if (err) return console.log(err);
+
+
+        db.query(`UPDATE employee SET manager_id = ? WHERE id = ?`, [mgr_id, empl_id], (err, chg_data) => {
+            if (err) return console.log(err);
+    
+            console.log(`Successfully changed ${user_sels[0].choose_empl_chg_mgr}'s  manager to ${user_sels[1].update_mgr}!`)
+            return otherPrompt();
+        });
+
+        });
+    })
+    })
+    })
+
+})
+}
 
 
 /*
@@ -488,36 +677,128 @@ View employees by department.
 Delete departments, roles, and employees.
 
 View the total utilized budget of a department—in other words, the combined salaries of all employees in that department.
+*/
+
+
+function deleteRole() {
+
+    return new Promise((res, rej) => {
+
+        db.query(`SELECT title FROM employee_role`, (err, roles) => {
+            if (err) return console.log(err);
+    
+            res(roles.map(role => role.title))
+        })
+
+
+    })
+    .then((role_list) => {
+
+    const delRolePrompt = {
+        type: 'list',
+        name: 'del_role',
+        message: "Which job position do you want to delete?",
+        choices: role_list
+    };
+
+    return inquirer.prompt(delRolePrompt)
+
+    .then((role_sel) => {
+
+        db.query(`SELECT id FROM employee_role WHERE title = ?`, role_sel, (err, role_id) => {
+            if (err) return console.log(err);
+
+
+        db.query(`DELETE FROM employee_role WHERE id = ?`, role_id, (err, del_data) => {
+            if (err) return console.log(err);
+    
+            console.log(`${role_sel} position successfully delete`)
+            return otherPrompt();
+        });
+
+        });
+    })
+
+})
+
+};
+
+
+function deleteEmployee() {
+
+    return new Promise((res, rej) => {
+
+        db.query(`SELECT CONCAT(first_name, ' ', last_name) AS 'fullname' FROM employee`, (err, empls) => {
+            if (err) return console.log(err);
+    
+            res(empls.map(empl => empl.fullname))
+        })
+
+
+    })
+    .then((empl_list) => {
+
+    const delEmplPrompt = {
+        type: 'list',
+        name: 'del_employee',
+        message: "Which employee do you wish to terminate, you monster?",
+        choices: empl_list
+    };
+
+    return inquirer.prompt(delEmplPrompt)
+
+    .then((empl_sel) => {
+
+        db.query(`SELECT id FROM employee WHERE CONCAT(first_name, ' ', last_name) = ?`, empl_sel, (err, empl_id) => {
+            if (err) return console.log(err);
+
+
+        db.query(`DELETE FROM employee WHERE id = ?`, empl_id, (err, del_data) => {
+            if (err) return console.log(err);
+    
+            console.log(`${empl_sel} successfully terminated! Good riddance!`)
+            return otherPrompt();
+        });
+
+        });
+    })
+
+})
+
+};
+
 
 
 const otherOptions = {
     type: 'list',
     name: 'addl_options',
     message: 'What would you like to do?',
-    choices: ['Update employee managers', 'View employees by manager', 'View employees by department', 'View total department budget', 'Delete a department', 'Delete a role', 'Delete an employee', 'End'],
+    choices: ['Update employee managers', 'View employees by manager', 'View employees by department', 'View total department budget', 'Delete a department', 'Delete a role', 'Delete an employee', 'Return to main menu', 'End'],
 };
 
 
 function otherPrompt() {
 
-    return inquirer.prompt(selectPrompt)
+    return inquirer.prompt(otherOptions)
 
     .then((select) => {
         switch(select.browse_options) {
             case 'Update employee managers':
-                return FUNCTION();
+                return updateManager();
             case 'View employees by manager':
-                return FUNCTION();
+                return viewEmplMgr();
             case 'View employees by department':
-                return Function();
+                return viewEmplDept();
             case 'View total department budget':
-                return Function();
+                return viewDeptBudget();
             case 'Delete a department':
-                return FUNCTION();
+                return deleteDept();
             case 'Delete a role':
-                return FUNCTION();
+                return deleteRole();
             case 'Delete an employee':
-                return FUNCTION();
+                return deleteEmployee();
+            case 'Return to main menu':
+                return initialPrompt();
             default:
                 return leaveSession();
         }
@@ -526,7 +807,6 @@ function otherPrompt() {
 
 
 
-*/
 
 initialPrompt();
 
