@@ -33,7 +33,7 @@ async function deleteRole() {
     //Query to delete the selected role from the database
     const del_data = await db.query(`DELETE FROM employee_role WHERE id = ?`, roleId);
                     
-    console.log(`${select_role} position successfully delete.`);
+    console.log(`${select_role} position successfully deleted.`);
     
     //Reminder message to update the roles of any employees who had been assigned to the deleted role
     if (employee_names != "") {
